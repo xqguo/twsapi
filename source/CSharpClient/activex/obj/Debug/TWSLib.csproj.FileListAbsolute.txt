@@ -1,0 +1,6 @@
+C:\TWS API\source\csharpclient\activex\bin\Debug\TWSLib.dll
+C:\TWS API\source\csharpclient\activex\bin\Debug\TWSLib.pdb
+C:\TWS API\source\csharpclient\activex\obj\Debug\TWSLib.csproj.AssemblyReference.cache
+C:\TWS API\source\csharpclient\activex\obj\Debug\TWSLib.csproj.CoreCompileInputs.cache
+C:\TWS API\source\csharpclient\activex\obj\Debug\TWSLib.dll
+C:\TWS API\source\csharpclient\activex\obj\Debug\TWSLib.pdb
