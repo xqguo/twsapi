@@ -10,7 +10,7 @@ open System.Reflection
 [<assembly: System.Reflection.AssemblyCompanyAttribute("IBSampleApp")>]
 [<assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")>]
 [<assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")>]
-[<assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")>]
+[<assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1cd3b04ce04e83d056ccefcda2b387e0eab453c5")>]
 [<assembly: System.Reflection.AssemblyProductAttribute("IBSampleApp")>]
 [<assembly: System.Reflection.AssemblyTitleAttribute("IBSampleApp")>]
 [<assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")>]

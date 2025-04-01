@@ -313,7 +313,7 @@ type IBClient() as this =
         member _.newsProviders(newsProviders) = ()
 
     member this.Connect() =
-        clientSocket.eConnect("127.0.0.1", 7497, 0)
+        clientSocket.eConnect("127.0.0.1", 7496, 0)
         
         // Initialize and start the message reader thread
         if clientSocket.IsConnected() then

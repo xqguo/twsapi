@@ -130,11 +130,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\TWS API\\samples\\FSharp\\IBSampleApp.fsproj",
+      "projectUniqueName": "C:\\Users\\xguo\\source\\repos\\twsapi\\samples\\FSharp\\IBSampleApp.fsproj",
       "projectName": "IBSampleApp",
-      "projectPath": "C:\\TWS API\\samples\\FSharp\\IBSampleApp.fsproj",
+      "projectPath": "C:\\Users\\xguo\\source\\repos\\twsapi\\samples\\FSharp\\IBSampleApp.fsproj",
       "packagesPath": "C:\\Users\\xguo\\.nuget\\packages\\",
-      "outputPath": "C:\\TWS API\\samples\\FSharp\\obj\\",
+      "outputPath": "C:\\Users\\xguo\\source\\repos\\twsapi\\samples\\FSharp\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -156,8 +156,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\TWS API\\source\\CSharpClient\\client\\CSharpAPI.csproj": {
-              "projectPath": "C:\\TWS API\\source\\CSharpClient\\client\\CSharpAPI.csproj"
+            "C:\\Users\\xguo\\source\\repos\\twsapi\\source\\CSharpClient\\client\\CSharpAPI.csproj": {
+              "projectPath": "C:\\Users\\xguo\\source\\repos\\twsapi\\source\\CSharpClient\\client\\CSharpAPI.csproj"
             }
           }
         }
