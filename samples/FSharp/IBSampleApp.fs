@@ -18,7 +18,7 @@ type IBClient() as this =
         member _.accountSummary(reqId: int, account: string, tag: string, value: string, currency: string) =
             if tag = "NetLiquidation" then
                 printfn "Net Liquidation Value: ReqId=%d, Account=%s, Value=%s %s" reqId account value currency
-                accountSummaryEvent.Set() // Signal that the response has been received
+                accountSummaryEvent.Set() |> ignore// Signal that the response has been received
 
         member _.accountSummaryEnd(reqId: int) =
             printfn "Account Summary Request Completed: ReqId=%d" reqId
@@ -75,7 +75,7 @@ type IBClient() as this =
         member _.positionEnd() = ()
 
         // Real-time bar-related methods
-        member _.realtimeBar(reqId: int, date: int64, ``open``: float, high: float, low: float, close: float, volume: decimal, WAP: decimal, count: int) = ()
+        member _.realtimeBar(reqId: int, date: int64, ``open``: float, high: float, low: float, close: float, volume: decimal, wap: decimal, count: int) = ()
 
         // Financial advisor-related methods
         member _.receiveFA(faDataType: int, faXmlData: string) = ()
@@ -164,7 +164,7 @@ type IBClient() as this =
         reader.Start()
         let readerThread = new Thread(ThreadStart(fun () ->
             while clientSocket.IsConnected() do
-                signal.waitForSignal()
+                signal.waitForSignal() |> ignore // Explicitly discard the result
                 reader.processMsgs()
         ))
         readerThread.IsBackground <- true
@@ -177,7 +177,7 @@ type IBClient() as this =
     member this.ViewNetLiquidationValue(account: string) =
         let reqId = nextOrderId
         nextOrderId <- nextOrderId + 1
-        accountSummaryEvent.Reset() // Reset the event before making the request
+        accountSummaryEvent.Reset() |> ignore// Reset the event before making the request
         clientSocket.reqAccountSummary(reqId, "All", "NetLiquidation")
         printfn "Requested Net Liquidation Value for Account=%s with ReqId=%d" account reqId
 
@@ -193,5 +193,6 @@ let main argv =
     // View Net Liquidation Value
     client.ViewNetLiquidationValue("U8865335")  // Replace with your account ID
 
-    client.Disconnect()
+    client.Disconnect() |> ignore
+
     0
