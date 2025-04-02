@@ -16,12 +16,14 @@ type IBClient() as this =
     interface EWrapper with
         // Account summary-related methods
         member _.accountSummary(reqId: int, account: string, tag: string, value: string, currency: string) =
+            printfn "Account Summary: ReqId=%d, Account=%s, Tag=%s, Value=%s, Currency=%s" reqId account tag value currency
             match tag with
             | "NetLiquidation" ->
                 printfn "Net Liquidation Value: ReqId=%d, Account=%s, Value=%s %s" reqId account value currency
-            | "CashBalance" ->
-                printfn "Cash Balance: ReqId=%d, Account=%s, Currency=%s, Balance=%s" reqId account currency value
-                accountSummaryEvent.Set() |> ignore // Signal that the response has been received
+                accountSummaryEvent.Set() |> ignore
+            | "TotalCashValue" ->
+                printfn "Total Cash Balance: ReqId=%d, Account=%s, Currency=%s, Balance=%s" reqId account currency value
+                accountSummaryEvent.Set() |> ignore
             | _ -> ()
 
         member _.accountSummaryEnd(reqId: int) =
@@ -167,7 +169,7 @@ type IBClient() as this =
         let reqId = nextOrderId
         nextOrderId <- nextOrderId + 1
         accountSummaryEvent.Reset() |> ignore // Reset the event before making the request
-        clientSocket.reqAccountSummary(reqId, "All", "CashBalance")
+        clientSocket.reqAccountSummary(reqId, "All", "TotalCashValue")
 
         // Wait for the response or timeout after 10 seconds
         if not (accountSummaryEvent.WaitOne(10000)) then
