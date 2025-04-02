@@ -10,18 +10,25 @@ type IBClient() as this =
     // Initialize reader
     let mutable reader = Unchecked.defaultof<EReader>
 
-    // Synchronization for account summary
-    let accountSummaryEvent = new ManualResetEvent(false)
+    // Synchronization for positions
+    let positionEvent = new ManualResetEvent(false)
 
     interface EWrapper with
         // Account summary-related methods
         member _.accountSummary(reqId: int, account: string, tag: string, value: string, currency: string) =
             if tag = "NetLiquidation" then
                 printfn "Net Liquidation Value: ReqId=%d, Account=%s, Value=%s %s" reqId account value currency
-                accountSummaryEvent.Set() |> ignore// Signal that the response has been received
 
         member _.accountSummaryEnd(reqId: int) =
             printfn "Account Summary Request Completed: ReqId=%d" reqId
+
+        // Position-related methods
+        member _.position(account: string, contract: Contract, pos: decimal, avgCost: float) =
+            printfn "Position: Account=%s, Contract=%s, Position=%M, AvgCost=%.2f" account contract.Symbol pos avgCost
+
+        member _.positionEnd() =
+            printfn "All positions retrieved."
+            positionEvent.Set() |> ignore // Signal that all positions have been received
 
         // Error handlers
         member _.error(id: int, errorCode: int, errorMsg: string, advancedOrderRejectJson: string) =
@@ -38,72 +45,38 @@ type IBClient() as this =
             nextOrderId <- orderId
             printfn "Next Valid Id: %d" orderId
 
-        // Portfolio and account-related methods
-        member _.updatePortfolio(contract: Contract, position: decimal, marketPrice: float, marketValue: float, averageCost: float, unrealizedPNL: float, realizedPNL: float, accountName: string) = ()
-        member _.updateAccountTime(timestamp: string) = ()
-        member _.accountDownloadEnd(account: string) = ()
-
-        // Order-related methods
-        member _.orderStatus(orderId: int, status: string, filled: decimal, remaining: decimal, avgFillPrice: float, permId: int, parentId: int, lastFillPrice: float, clientId: int, whyHeld: string, mktCapPrice: float) = ()
-        member _.openOrder(orderId: int, contract: Contract, order: Order, orderState: OrderState) = ()
-        member _.openOrderEnd() = ()
-
-        // Contract-related methods
-        member _.contractDetails(reqId: int, contractDetails: ContractDetails) = ()
-        member _.contractDetailsEnd(reqId: int) = ()
-        member _.bondContractDetails(reqId: int, contract: ContractDetails) = ()
-
-        // Execution-related methods
-        member _.execDetails(reqId: int, contract: Contract, execution: Execution) = ()
-        member _.execDetailsEnd(reqId: int) = ()
-
-        // Historical data-related methods
-        member _.historicalData(reqId: int, bar: Bar) = ()
-        member _.historicalDataUpdate(reqId: int, bar: Bar) = ()
-        member _.historicalDataEnd(reqId: int, start: string, ``end``: string) = ()
-
-        // Market data-related methods
-        member _.marketDataType(reqId: int, marketDataType: int) = ()
-        member _.updateMktDepth(tickerId: int, position: int, operation: int, side: int, price: float, size: decimal) = ()
-        member _.updateMktDepthL2(tickerId: int, position: int, marketMaker: string, operation: int, side: int, price: float, size: decimal, isSmartDepth: bool) = ()
-
-        // News-related methods
-        member _.updateNewsBulletin(msgId: int, msgType: int, message: string, origExchange: string) = ()
-
-        // Position-related methods
-        member _.position(account: string, contract: Contract, pos: decimal, avgCost: float) = ()
-        member _.positionEnd() = ()
-
-        // Real-time bar-related methods
-        member _.realtimeBar(reqId: int, date: int64, ``open``: float, high: float, low: float, close: float, volume: decimal, wap: decimal, count: int) = ()
-
-        // Financial advisor-related methods
-        member _.receiveFA(faDataType: int, faXmlData: string) = ()
-
-        // Tick request parameters
-        member _.tickReqParams(tickerId: int, minTick: float, bboExchange: string, snapshotPermissions: int) = ()
-
-        // Historical ticks
-        member _.historicalTicks(reqId: int, ticks: HistoricalTick array, ``done``: bool) = ()
-        member _.historicalTicksBidAsk(reqId: int, ticks: HistoricalTickBidAsk array, ``done``: bool) = ()
-        member _.historicalTicksLast(reqId: int, ticks: HistoricalTickLast array, ``done``: bool) = ()
-
-        // Tick-by-tick data
-        member _.tickByTickAllLast(reqId: int, tickType: int, time: int64, price: float, size: decimal, tickAttribLast: TickAttribLast, exchange: string, specialConditions: string) = ()
-        member _.tickByTickBidAsk(reqId: int, time: int64, bidPrice: float, askPrice: float, bidSize: decimal, askSize: decimal, tickAttribBidAsk: TickAttribBidAsk) = ()
-        member _.tickByTickMidPoint(reqId: int, time: int64, midPoint: float) = ()
-
-        // Commission report
-        member _.commissionReport(commissionReport: CommissionReport) = ()
-
-        // Order-bound methods
-        member _.orderBound(orderId: int64, apiClientId: int, apiOrderId: int) = ()
-
-        // Completed orders
-        member _.completedOrder(contract: Contract, order: Order, orderState: OrderState) = ()
-        member _.completedOrdersEnd() = ()
-
         // Other required methods (stub implementations)
+        member _.updatePortfolio(_, _, _, _, _, _, _, _) = ()
+        member _.updateAccountTime(_) = ()
+        member _.accountDownloadEnd(_) = ()
+        member _.orderStatus(_, _, _, _, _, _, _, _, _, _, _) = ()
+        member _.openOrder(_, _, _, _) = ()
+        member _.openOrderEnd() = ()
+        member _.contractDetails(_, _) = ()
+        member _.contractDetailsEnd(_) = ()
+        member _.bondContractDetails(_, _) = ()
+        member _.execDetails(_, _, _) = ()
+        member _.execDetailsEnd(_) = ()
+        member _.historicalData(_, _) = ()
+        member _.historicalDataUpdate(_, _) = ()
+        member _.historicalDataEnd(_, _, _) = ()
+        member _.marketDataType(_, _) = ()
+        member _.updateMktDepth(_, _, _, _, _, _) = ()
+        member _.updateMktDepthL2(_, _, _, _, _, _, _, _) = ()
+        member _.updateNewsBulletin(_, _, _, _) = ()
+        member _.realtimeBar(_, _, _, _, _, _, _, _, _) = ()
+        member _.receiveFA(_, _) = ()
+        member _.tickReqParams(_, _, _, _) = ()
+        member _.historicalTicks(_, _, _) = ()
+        member _.historicalTicksBidAsk(_, _, _) = ()
+        member _.historicalTicksLast(_, _, _) = ()
+        member _.tickByTickAllLast(_, _, _, _, _, _, _, _) = ()
+        member _.tickByTickBidAsk(_, _, _, _, _, _, _) = ()
+        member _.tickByTickMidPoint(_, _, _) = ()
+        member _.commissionReport(_) = ()
+        member _.orderBound(_, _, _) = ()
+        member _.completedOrder(_, _, _) = ()
+        member _.completedOrdersEnd() = ()
         member _.tickPrice(_, _, _, _) = ()
         member _.tickSize(_, _, _) = ()
         member _.tickString(_, _, _) = ()
@@ -164,7 +137,7 @@ type IBClient() as this =
         reader.Start()
         let readerThread = new Thread(ThreadStart(fun () ->
             while clientSocket.IsConnected() do
-                signal.waitForSignal() |> ignore // Explicitly discard the result
+                signal.waitForSignal()
                 reader.processMsgs()
         ))
         readerThread.IsBackground <- true
@@ -174,25 +147,30 @@ type IBClient() as this =
         clientSocket.eDisconnect()
         printfn "Disconnected from TWS"
 
-    member this.ViewNetLiquidationValue(account: string) =
-        let reqId = nextOrderId
-        nextOrderId <- nextOrderId + 1
-        accountSummaryEvent.Reset() |> ignore// Reset the event before making the request
-        clientSocket.reqAccountSummary(reqId, "All", "NetLiquidation")
-        printfn "Requested Net Liquidation Value for Account=%s with ReqId=%d" account reqId
+    member this.RetrieveAllPositions() =
+        printfn "Requesting all positions..."
+        positionEvent.Reset() |> ignore // Reset the event before making the request
+        clientSocket.reqPositions()
 
         // Wait for the response or timeout after 10 seconds
-        if not (accountSummaryEvent.WaitOne(10000)) then
-            printfn "Timeout waiting for Net Liquidation Value response."
+        if not (positionEvent.WaitOne(10000)) then
+            printfn "Timeout waiting for positions."
+
+    member this.ViewNetLiquidationValue() =
+        printfn "Requesting Net Liquidation Value..."
+        let reqId = nextOrderId
+        nextOrderId <- nextOrderId + 1
+        clientSocket.reqAccountSummary(reqId, "All", "NetLiquidation")
 
 [<EntryPoint>]
 let main argv =
     let client = IBClient()
     client.Connect()
 
-    // View Net Liquidation Value
-    client.ViewNetLiquidationValue("U8865335")  // Replace with your account ID
-
+    // Retrieve all positions
+    client.RetrieveAllPositions()
+    client.ViewNetLiquidationValue()
+    Thread.Sleep(5000)
     client.Disconnect() |> ignore
 
     0
