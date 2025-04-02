@@ -10,27 +10,25 @@ type IBClient() as this =
     // Initialize reader
     let mutable reader = Unchecked.defaultof<EReader>
 
-    // Synchronization for positions
-    let positionEvent = new ManualResetEvent(false)
+    // Synchronization for account summary
+    let accountSummaryEvent = new ManualResetEvent(false)
 
     interface EWrapper with
         // Account summary-related methods
         member _.accountSummary(reqId: int, account: string, tag: string, value: string, currency: string) =
-            if tag = "NetLiquidation" then
+            match tag with
+            | "NetLiquidation" ->
                 printfn "Net Liquidation Value: ReqId=%d, Account=%s, Value=%s %s" reqId account value currency
+            | "CashBalance" ->
+                printfn "Cash Balance: ReqId=%d, Account=%s, Currency=%s, Balance=%s" reqId account currency value
+                accountSummaryEvent.Set() |> ignore // Signal that the response has been received
+            | _ -> ()
 
         member _.accountSummaryEnd(reqId: int) =
             printfn "Account Summary Request Completed: ReqId=%d" reqId
 
-        // Position-related methods
-        member _.position(account: string, contract: Contract, pos: decimal, avgCost: float) =
-            printfn "Position: Account=%s, Contract=%s, Position=%M, AvgCost=%.2f" account contract.Symbol pos avgCost
-
-        member _.positionEnd() =
-            printfn "All positions retrieved."
-            positionEvent.Set() |> ignore // Signal that all positions have been received
-
         // Error handlers
+        /// <summary></summary>
         member _.error(id: int, errorCode: int, errorMsg: string, advancedOrderRejectJson: string) =
             printfn "Error: Id=%d, Code=%d, Msg=%s" id errorCode errorMsg
 
@@ -45,7 +43,13 @@ type IBClient() as this =
             nextOrderId <- orderId
             printfn "Next Valid Id: %d" orderId
 
-        // Other required methods (stub implementations)
+        member _.position(account: string, contract: Contract, pos: decimal, avgCost: float) =
+            printfn "Position: Account=%s, Contract=%s, Position=%M, AvgCost=%.2f" account contract.Symbol pos avgCost
+
+        member _.positionEnd() =
+            printfn "All positions retrieved."
+
+// Other required methods (stub implementations)
         member _.updatePortfolio(_, _, _, _, _, _, _, _) = ()
         member _.updateAccountTime(_) = ()
         member _.accountDownloadEnd(_) = ()
@@ -147,30 +151,45 @@ type IBClient() as this =
         clientSocket.eDisconnect()
         printfn "Disconnected from TWS"
 
-    member this.RetrieveAllPositions() =
-        printfn "Requesting all positions..."
-        positionEvent.Reset() |> ignore // Reset the event before making the request
-        clientSocket.reqPositions()
-
-        // Wait for the response or timeout after 10 seconds
-        if not (positionEvent.WaitOne(10000)) then
-            printfn "Timeout waiting for positions."
-
     member this.ViewNetLiquidationValue() =
         printfn "Requesting Net Liquidation Value..."
         let reqId = nextOrderId
         nextOrderId <- nextOrderId + 1
+        accountSummaryEvent.Reset() |> ignore // Reset the event before making the request
         clientSocket.reqAccountSummary(reqId, "All", "NetLiquidation")
+
+        // Wait for the response or timeout after 10 seconds
+        if not (accountSummaryEvent.WaitOne(10000)) then
+            printfn "Timeout waiting for Net Liquidation Value response."
+
+    member this.ViewCashBalances() =
+        printfn "Requesting Cash Balances..."
+        let reqId = nextOrderId
+        nextOrderId <- nextOrderId + 1
+        accountSummaryEvent.Reset() |> ignore // Reset the event before making the request
+        clientSocket.reqAccountSummary(reqId, "All", "CashBalance")
+
+        // Wait for the response or timeout after 10 seconds
+        if not (accountSummaryEvent.WaitOne(10000)) then
+            printfn "Timeout waiting for Cash Balance response."
+
+    member this.RetrieveAllPositions() =
+        printfn "Requesting all positions..."
+        clientSocket.reqPositions()
 
 [<EntryPoint>]
 let main argv =
     let client = IBClient()
     client.Connect()
 
-    // Retrieve all positions
-    client.RetrieveAllPositions()
+    // View Net Liquidation Value
     client.ViewNetLiquidationValue()
+
+    // View Net Liquidation Value
+    client.ViewCashBalances()
+    client.RetrieveAllPositions()
+
     Thread.Sleep(5000)
     client.Disconnect() |> ignore
-
     0
+
