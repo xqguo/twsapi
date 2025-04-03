@@ -58,11 +58,18 @@ type IBClient() as this =
         // Market data-related methods
         member _.tickPrice(tickerId: int, field: int, price: float, attribs: TickAttrib) =
             let fieldName = getFieldName field
-            printfn "Tick Price: TickerId=%d, Field=%s, Price=%.2f" tickerId fieldName price
+            match fieldName with
+            | x when x.Contains("Ask") 
+                -> printfn "Delayed Tick Price: TickerId=%d, Field=%s, Price=%.2f" tickerId fieldName price
+            | x when x.Contains("Bid") 
+                -> printfn "Delayed Tick Price: TickerId=%d, Field=%s, Price=%.2f" tickerId fieldName price
+            | x when x.Contains("Last") 
+                -> printfn "Delayed Tick Price: TickerId=%d, Field=%s, Price=%.2f" tickerId fieldName price
+            | _ -> ()
 
-        member _.tickSize(tickerId: int, field: int, size: Decimal) =
-            let fieldName = getFieldName field
-            printfn "Tick Size: TickerId=%d, Field=%s, Size=%M" tickerId fieldName size
+        member _.tickSize(tickerId: int, field: int, size: Decimal) = ()
+            // let fieldName = getFieldName field
+            // printfn "Tick Size: TickerId=%d, Field=%s, Size=%M" tickerId fieldName size
 
         member _.tickSnapshotEnd(tickerId: int) =
             printfn "Tick Snapshot End: TickerId=%d" tickerId
