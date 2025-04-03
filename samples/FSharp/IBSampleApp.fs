@@ -179,6 +179,33 @@ type IBClient() as this =
         printfn "Requesting all positions..."
         clientSocket.reqPositions()
 
+    member this.RequestMarketData() =
+        printfn "Requesting market data for GOOG, 700 HK, and GCZ05..."
+
+        // Define contracts for the symbols
+        let googContract = new Contract()
+        googContract.Symbol <- "GOOG"
+        googContract.SecType <- "STK"
+        googContract.Exchange <- "SMART"
+        googContract.Currency <- "USD"
+
+        let hk700Contract = new Contract()
+        hk700Contract.Symbol <- "700"
+        hk700Contract.SecType <- "STK"
+        hk700Contract.Exchange <- "SEHK"
+        hk700Contract.Currency <- "HKD"
+
+        let gcz05Contract = new Contract()
+        gcz05Contract.Symbol <- "GCZ05"
+        gcz05Contract.SecType <- "FUT"
+        gcz05Contract.Exchange <- "NYMEX"
+        gcz05Contract.Currency <- "USD"
+
+        // Request market data
+        clientSocket.reqMktData(1, googContract, "", false, false, null)
+        clientSocket.reqMktData(2, hk700Contract, "", false, false, null)
+        clientSocket.reqMktData(3, gcz05Contract, "", false, false, null)
+
 [<EntryPoint>]
 let main argv =
     let client = IBClient()
@@ -190,6 +217,7 @@ let main argv =
     // View Net Liquidation Value
     client.ViewCashBalances()
     client.RetrieveAllPositions()
+    client.RequestMarketData()
 
     Thread.Sleep(5000)
     client.Disconnect() |> ignore
