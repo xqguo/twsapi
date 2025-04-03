@@ -123,13 +123,28 @@ type IBClient() as this =
         member _.contractDetailsEnd(reqId: int) =
             printfn "Futures chain request completed: ReqId=%d" reqId
 
+        member _.openOrder(orderId: int, contract: Contract, order: Order, orderState: OrderState) =
+            printfn "Open Order: OrderId=%d, Symbol=%s, SecType=%s, Exchange=%s, Action=%s, Quantity=%.2f, Price=%.2f, Status=%s"
+                orderId
+                contract.Symbol
+                contract.SecType
+                contract.Exchange
+                order.Action
+                order.TotalQuantity
+                order.LmtPrice
+                orderState.Status
+
+        member _.openOrderEnd() =
+            printfn "All open orders have been received."
+
+        member _.orderStatus(orderId: int, status: string, filled: decimal, remaining: decimal, avgFillPrice: float, permId: int, parentId: int, lastFillPrice: float, clientId: int, whyHeld: string, mktCapPrice: float) =
+            printfn "Order Status: OrderId=%d, Status=%s, Filled=%.2f, Remaining=%.2f, AvgFillPrice=%.2f"
+                orderId status filled remaining avgFillPrice
+
 // Other required methods (stub implementations)
         member _.updatePortfolio(_, _, _, _, _, _, _, _) = ()
         member _.updateAccountTime(_) = ()
         member _.accountDownloadEnd(_) = ()
-        member _.orderStatus(_, _, _, _, _, _, _, _, _, _, _) = ()
-        member _.openOrder(_, _, _, _) = ()
-        member _.openOrderEnd() = ()
         member _.bondContractDetails(_, _) = ()
         member _.execDetails(_, _, _) = ()
         member _.execDetailsEnd(_) = ()
@@ -317,6 +332,14 @@ type IBClient() as this =
 
         clientSocket.reqContractDetails(1, gcContract)
 
+    member this.RequestOpenOrders() =
+        printfn "Requesting open orders..."
+        clientSocket.reqOpenOrders()
+
+    member this.CancelOrder(orderId: int) =
+        printfn "Cancelling order with OrderId=%d..." orderId
+        clientSocket.cancelOrder(orderId, new OrderCancel())
+
 [<EntryPoint>]
 let main argv =
     let client = IBClient()
@@ -332,7 +355,9 @@ let main argv =
     // client.RequestFuturesChain()
     client.RequestDelayedMarketData()
     // client.RequestSnapshotMarketData()
-    Thread.Sleep(5000)
+    client.RequestOpenOrders()
+    //client.CancelOrder(-2)
+    Thread.Sleep(5000) 
     client.Disconnect() 
     0
 
