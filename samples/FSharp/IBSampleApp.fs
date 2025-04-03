@@ -323,11 +323,11 @@ let main argv =
     client.Connect()
 
     // View Net Liquidation Value
-    // client.ViewNetLiquidationValue()
+    client.ViewNetLiquidationValue()
     // View Net Liquidation Value
-    // client.ViewCashBalances()
-    // client.RetrieveAllPositions()
-    // client.RequestMarketData()
+    client.ViewCashBalances()
+    client.RetrieveAllPositions()
+    client.RequestMarketData()
     // client.RequestContractDetails()
     // client.RequestFuturesChain()
     client.RequestDelayedMarketData()
