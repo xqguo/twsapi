@@ -2,6 +2,20 @@ open System
 open System.Threading
 open IBApi
 
+let getFieldName fieldId =
+    match fieldId with
+    | 0 -> "Bid Size"
+    | 1 -> "Bid Price"
+    | 2 -> "Ask Price"
+    | 3 -> "Ask Size"
+    | 4 -> "Last Price"
+    | 5 -> "Last Size"
+    | 6 -> "High Price"
+    | 7 -> "Low Price"
+    | 8 -> "Volume"
+    | 9 -> "Close Price"
+    | _ -> sprintf "Unknown Field (%d)" fieldId
+
 type IBClient() as this =
     let mutable nextOrderId = 0
     let signal = new EReaderMonitorSignal()
@@ -29,8 +43,35 @@ type IBClient() as this =
         member _.accountSummaryEnd(reqId: int) =
             printfn "Account Summary Request Completed: ReqId=%d" reqId
 
-        // Error handlers
-        /// <summary></summary>
+        // Market data-related methods
+        member _.tickPrice(tickerId: int, field: int, price: float, attribs: TickAttrib) =
+            let fieldName = getFieldName field
+            printfn "Tick Price: TickerId=%d, Field=%s, Price=%.2f" tickerId fieldName price
+
+        member _.tickSize(tickerId: int, field: int, size: Decimal) =
+            let fieldName = getFieldName field
+            printfn "Tick Size: TickerId=%d, Field=%s, Size=%M" tickerId fieldName size
+
+        member _.tickString(tickerId: int, field: int, value: string) =
+            let fieldName = getFieldName field
+            printfn "Tick String: TickerId=%d, Field=%s, Value=%s" tickerId fieldName value
+
+        member _.tickGeneric(tickerId: int, field: int, value: float) =
+            let fieldName = getFieldName field
+            printfn "Tick Generic: TickerId=%d, Field=%s, Value=%.2f" tickerId fieldName value
+
+        member _.tickSnapshotEnd(tickerId: int) =
+            printfn "Tick Snapshot End: TickerId=%d" tickerId
+
+        member _.tickEFP(tickerId: int, tickType: int, basisPoints: float, formattedBasisPoints: string, impliedFuture: float, holdDays: int, futureLastTradeDate: string, dividendImpact: float, dividendsToLastTradeDate: float) =
+            printfn "tickEFP: TickerId=%d, TickType=%d, BasisPoints=%.2f, FormattedBasisPoints=%s, ImpliedFuture=%.2f, HoldDays=%d, FutureLastTradeDate=%s, DividendImpact=%.2f, DividendsToLastTradeDate=%.2f"
+                tickerId tickType basisPoints formattedBasisPoints impliedFuture holdDays futureLastTradeDate dividendImpact dividendsToLastTradeDate
+
+        member _.tickOptionComputation(tickerId: int, field: int, tickAttrib: int, impliedVolatility: float, delta: float, optPrice: float, pvDividend: float, gamma: float, vega: float, theta: float, undPrice: float) =
+            printfn "tickOptionComputation: TickerId=%d, Field=%d, TickAttrib=%d, ImpliedVolatility=%.2f, Delta=%.2f, OptPrice=%.2f, PvDividend=%.2f, Gamma=%.2f, Vega=%.2f, Theta=%.2f, UndPrice=%.2f"
+                tickerId field tickAttrib impliedVolatility delta optPrice pvDividend gamma vega theta undPrice
+
+        // Error handling
         member _.error(id: int, errorCode: int, errorMsg: string, advancedOrderRejectJson: string) =
             printfn "Error: Id=%d, Code=%d, Msg=%s" id errorCode errorMsg
 
@@ -83,13 +124,6 @@ type IBClient() as this =
         member _.orderBound(_, _, _) = ()
         member _.completedOrder(_, _, _) = ()
         member _.completedOrdersEnd() = ()
-        member _.tickPrice(_, _, _, _) = ()
-        member _.tickSize(_, _, _) = ()
-        member _.tickString(_, _, _) = ()
-        member _.tickGeneric(_, _, _) = ()
-        member _.tickEFP(_, _, _, _, _, _, _, _, _) = ()
-        member _.tickOptionComputation(_, _, _, _, _, _, _, _, _, _, _) = ()
-        member _.tickSnapshotEnd(_) = ()
         member _.managedAccounts(_) = ()
         member _.updateAccountValue(_, _, _, _) = ()
         member _.currentTime(_) = ()
@@ -202,9 +236,9 @@ type IBClient() as this =
         gcz05Contract.Currency <- "USD"
 
         // Request market data
-        clientSocket.reqMktData(1, googContract, "", false, false, null)
-        clientSocket.reqMktData(2, hk700Contract, "", false, false, null)
-        clientSocket.reqMktData(3, gcz05Contract, "", false, false, null)
+        clientSocket.reqMktData(1, googContract, "", true, false, null) // Real-time data for GOOG
+        clientSocket.reqMktData(2, hk700Contract, "", true, false, null) // Real-time data for 700 HK
+        clientSocket.reqMktData(3, gcz05Contract, "", true, false, null) // Real-time data for GCZ05
 
 [<EntryPoint>]
 let main argv =
