@@ -14,6 +14,18 @@ let getFieldName fieldId =
     | 7 -> "Low Price"
     | 8 -> "Volume"
     | 9 -> "Close Price"
+    | 66 -> "Delayed Bid Price"
+    | 67 -> "Delayed Ask Price"
+    | 68 -> "Delayed Last Price"
+    | 69 -> "Delayed Bid Size"
+    | 70 -> "Delayed Ask Size"
+    | 71 -> "Delayed Last Size"
+    | 72 -> "Delayed High Price"
+    | 73 -> "Delayed Low Price"
+    | 74 -> "Delayed Volume"
+    | 75 -> "Delayed Close Price"
+    | 76 -> "Auction Price"
+    | 88 -> "RT Volume"
     | _ -> sprintf "Unknown Field (%d)" fieldId
 
 type IBClient() as this =
@@ -52,6 +64,9 @@ type IBClient() as this =
             let fieldName = getFieldName field
             printfn "Tick Size: TickerId=%d, Field=%s, Size=%M" tickerId fieldName size
 
+        member _.tickSnapshotEnd(tickerId: int) =
+            printfn "Tick Snapshot End: TickerId=%d" tickerId
+
         member _.tickString(tickerId: int, field: int, value: string) =
             let fieldName = getFieldName field
             printfn "Tick String: TickerId=%d, Field=%s, Value=%s" tickerId fieldName value
@@ -59,9 +74,6 @@ type IBClient() as this =
         member _.tickGeneric(tickerId: int, field: int, value: float) =
             let fieldName = getFieldName field
             printfn "Tick Generic: TickerId=%d, Field=%s, Value=%.2f" tickerId fieldName value
-
-        member _.tickSnapshotEnd(tickerId: int) =
-            printfn "Tick Snapshot End: TickerId=%d" tickerId
 
         member _.tickEFP(tickerId: int, tickType: int, basisPoints: float, formattedBasisPoints: string, impliedFuture: float, holdDays: int, futureLastTradeDate: string, dividendImpact: float, dividendsToLastTradeDate: float) =
             printfn "tickEFP: TickerId=%d, TickType=%d, BasisPoints=%.2f, FormattedBasisPoints=%s, ImpliedFuture=%.2f, HoldDays=%d, FutureLastTradeDate=%s, DividendImpact=%.2f, DividendsToLastTradeDate=%.2f"
@@ -92,6 +104,18 @@ type IBClient() as this =
         member _.positionEnd() =
             printfn "All positions retrieved."
 
+        member _.contractDetails(reqId: int, contractDetails: ContractDetails) =
+            printfn "Contract Details: ReqId=%d, Symbol=%s, Exchange=%s, Currency=%s, Expiry=%s, LocalSymbol=%s"
+                reqId
+                contractDetails.Contract.Symbol
+                contractDetails.Contract.Exchange
+                contractDetails.Contract.Currency
+                contractDetails.Contract.LastTradeDateOrContractMonth
+                contractDetails.Contract.LocalSymbol
+
+        member _.contractDetailsEnd(reqId: int) =
+            printfn "Futures chain request completed: ReqId=%d" reqId
+
 // Other required methods (stub implementations)
         member _.updatePortfolio(_, _, _, _, _, _, _, _) = ()
         member _.updateAccountTime(_) = ()
@@ -99,8 +123,6 @@ type IBClient() as this =
         member _.orderStatus(_, _, _, _, _, _, _, _, _, _, _) = ()
         member _.openOrder(_, _, _, _) = ()
         member _.openOrderEnd() = ()
-        member _.contractDetails(_, _) = ()
-        member _.contractDetailsEnd(_) = ()
         member _.bondContractDetails(_, _) = ()
         member _.execDetails(_, _, _) = ()
         member _.execDetailsEnd(_) = ()
@@ -217,11 +239,11 @@ type IBClient() as this =
         printfn "Requesting market data for GOOG, 700 HK, and GCZ05..."
 
         // Define contracts for the symbols
-        let googContract = new Contract()
-        googContract.Symbol <- "GOOG"
-        googContract.SecType <- "STK"
-        googContract.Exchange <- "SMART"
-        googContract.Currency <- "USD"
+        // let googContract = new Contract()
+        // googContract.Symbol <- "GOOG"
+        // googContract.SecType <- "STK"
+        // googContract.Exchange <- "SMART"
+        // googContract.Currency <- "USD"
 
         let hk700Contract = new Contract()
         hk700Contract.Symbol <- "700"
@@ -229,16 +251,64 @@ type IBClient() as this =
         hk700Contract.Exchange <- "SEHK"
         hk700Contract.Currency <- "HKD"
 
+        // let gcz05Contract = new Contract()
+        // gcz05Contract.Symbol <- "GCZ05"
+        // gcz05Contract.SecType <- "FUT"
+        // gcz05Contract.Exchange <- "NYMEX"
+        // gcz05Contract.Currency <- "USD"
+
+        // Request market data
+        // clientSocket.reqMktData(1, googContract, "", true, false, null) // Real-time data for GOOG
+        clientSocket.reqMktData(2, hk700Contract, "", true, false, null) // Real-time data for 700 HK
+        // clientSocket.reqMktData(3, gcz05Contract, "", true, false, null) // Real-time data for GCZ05
+
+    member this.RequestDelayedMarketData() =
+        printfn "Requesting delayed market data for Gold Future..."
+
         let gcz05Contract = new Contract()
-        gcz05Contract.Symbol <- "GCZ05"
+        gcz05Contract.Symbol <- "CL"
         gcz05Contract.SecType <- "FUT"
         gcz05Contract.Exchange <- "NYMEX"
         gcz05Contract.Currency <- "USD"
+        gcz05Contract.LastTradeDateOrContractMonth <- "202512" // Expiry date for December 2025
 
-        // Request market data
-        clientSocket.reqMktData(1, googContract, "", true, false, null) // Real-time data for GOOG
-        clientSocket.reqMktData(2, hk700Contract, "", true, false, null) // Real-time data for 700 HK
-        clientSocket.reqMktData(3, gcz05Contract, "", true, false, null) // Real-time data for GCZ05
+        // Switch to delayed market data
+        clientSocket.reqMarketDataType(3) // 3 = Delayed
+
+        // Request delayed market data
+        clientSocket.reqMktData(1, gcz05Contract, "", false, false, null) // `snapshot` is false for streaming delayed data
+
+    member this.RequestSnapshotMarketData() =
+        printfn "Requesting snapshot market data for GOOG..."
+
+        // Define the contract
+        let googContract = new Contract()
+        googContract.Symbol <- "GOOG"
+        googContract.SecType <- "STK"
+        googContract.Exchange <- "SMART"
+        googContract.Currency <- "USD"
+
+        // Request snapshot market data
+        clientSocket.reqMktData(2, googContract, "", true, false, null) // `snapshot` is true for one-time data
+
+    member this.RequestContractDetails() =
+        printfn "Requesting contract details for GC futures..."
+
+        let gcz05Contract = new Contract()
+        gcz05Contract.Symbol <- "GC"
+        gcz05Contract.SecType <- "FUT"
+
+        clientSocket.reqContractDetails(1, gcz05Contract)
+
+    member this.RequestFuturesChain() =
+        printfn "Requesting futures chain for GC..."
+
+        let gcContract = new Contract()
+        gcContract.Symbol <- "GC"
+        gcContract.SecType <- "FUT"
+        gcContract.Currency <- "USD"
+
+        clientSocket.reqContractDetails(1, gcContract)
 
 [<EntryPoint>]
 let main argv =
@@ -246,14 +316,16 @@ let main argv =
     client.Connect()
 
     // View Net Liquidation Value
-    client.ViewNetLiquidationValue()
-
+    // client.ViewNetLiquidationValue()
     // View Net Liquidation Value
-    client.ViewCashBalances()
-    client.RetrieveAllPositions()
-    client.RequestMarketData()
-
+    // client.ViewCashBalances()
+    // client.RetrieveAllPositions()
+    // client.RequestMarketData()
+    // client.RequestContractDetails()
+    // client.RequestFuturesChain()
+    client.RequestDelayedMarketData()
+    // client.RequestSnapshotMarketData()
     Thread.Sleep(5000)
-    client.Disconnect() |> ignore
+    client.Disconnect() 
     0
 
